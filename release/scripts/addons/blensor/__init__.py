@@ -11,6 +11,7 @@ import blensor.ibeo
 import blensor.kinect
 import blensor.exportmotion
 import blensor.mesh_utils
+import blensor.rotating_sensor
 from mathutils import Matrix
 from math import pi
 
@@ -26,7 +27,8 @@ __all__ = [
     'kinect'
     'ibeo',
     'exportmotion',
-    'mesh_utils'
+    'mesh_utils',
+    'rotating_sensor'
     ]
 
 
@@ -81,6 +83,44 @@ def velodyne_layout(obj, layout):
             col = row.column()
             col.prop(obj, "velodyne_ref_slope")
 
+
+def rotating_sensor_layout(obj, layout):
+    row = layout.row()
+    col = row.column()
+    col.label('Azimuth:')
+    col = row.column()
+    col.label('Elevation:')
+
+
+    row = layout.row()
+    col = row.column()
+    col.prop(obj, "rs_az_start")
+    col = row.column()
+    col.prop(obj, "rs_el_start")    
+    
+    row = layout.row()
+    col = row.column()
+    col.prop(obj, "rs_az_end")
+    col = row.column()
+    col.prop(obj, "rs_el_end")
+    
+    row = layout.row()
+    col = row.column()
+    col.prop(obj, "rs_az_resolution")
+    col = row.column()
+    col.prop(obj, "rs_el_resolution")
+    
+    row = layout.row()
+    row.prop(obj, "rs_max_dist")
+    row = layout.row()
+    col = row.column()
+    col.prop(obj, "velodyne_ref_dist")
+    col = row.column()
+    col.prop(obj, "velodyne_ref_limit")
+    row = layout.row()
+    col = row.column()
+    col.prop(obj, "velodyne_ref_slope")
+      
 
 def tof_layout(obj, layout):
             row = layout.row()
@@ -193,6 +233,8 @@ def dispatch_scan(obj, filename=None):
                 tof_res_y = obj.tof_yres,world_transformation=world_transformation)
             elif obj.scan_type == "kinect":
                 blensor.kinect.scan_advanced( scanner_object = obj, evd_file=filename, world_transformation=world_transformation)
+            elif obj.scan_type == "rotating":
+                blensor.rotating_sensor.scan_advanced(obj, filename)
             else:
                 print ("Scanner not supported ... yet")
 
@@ -291,6 +333,8 @@ class OBJECT_PT_sensor(bpy.types.Panel):
                 ibeo_layout(obj,layout)
             elif obj.scan_type == "depthmap":
                 depthmap_layout(obj,layout)
+            elif obj.scan_type == "rotating":
+                rotating_sensor_layout(obj, layout)
 
             row = layout.row()
             col = row.column()
@@ -626,7 +670,12 @@ class OBJECT_OT_exporthandler(bpy.types.Operator):
 
 
 
-laser_types=[("velodyne", "Velodyne HDL-64E", "Rotating infrared laser"),("ibeo","Ibeo LUX","Line laser with 4 rays"),("tof","TOF Camera","Time of Flight camera"),("kinect","Kinect","Primesense technology"),("depthmap","Depthmap","Plain Depthmap")]
+laser_types=[("velodyne", "Velodyne HDL-64E", "Rotating infrared laser"),
+             ("ibeo", "Ibeo LUX", "Line laser with 4 rays"),
+             ("tof", "TOF Camera", "Time of Flight camera"),
+             ("depthmap", "Depthmap", "Plain Depthmap"),
+             ("kinect","Kinect","Primesense technology"),
+             ("rotating", "Rotating", "Rotating Sensor")]
 
 
 ######################################################
@@ -712,6 +761,8 @@ def register():
     blensor.tof.addProperties(cType)
     blensor.kinect.addProperties(cType)
     blensor.depthmap.addProperties(cType)
+    blensor.rotating_sensor.addProperties(cType)
+    
 """Unregister the blender addon"""
 def unregister():
     bpy.utils.unregister_class(OBJECT_OT_exportmotion)
